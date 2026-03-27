@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  fedfim-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fedfim-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=UTC
+    restart: unless-stopped
+
+  fedfim-training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fedfim-training
+    command: python -m src.training.train_fedfim
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - training
